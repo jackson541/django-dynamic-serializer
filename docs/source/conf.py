@@ -20,13 +20,14 @@ exclude_patterns = []
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
-# Link "View page source" to GitHub instead of Read the Docs source view
+# "View page source" / "Edit on GitHub" links to the project root on GitHub
 html_context = {
     "display_github": True,
     "github_user": "jackson541",
     "github_repo": "django-dynamic-serializer",
     "github_version": "main",
     "conf_py_path": "docs/source/",
+    "github_repo_root": "https://github.com/jackson541/django-dynamic-serializer",
 }
 
 intersphinx_mapping = {
