@@ -1,8 +1,92 @@
 # django-dynamic-serializer
 
-Dynamically select which fields a Django REST Framework serializer returns.
+[![Tests](https://github.com/jackson541/django-dynamic-serializer/actions/workflows/tests.yml/badge.svg)](https://github.com/jackson541/django-dynamic-serializer/actions)
+[![Documentation](https://readthedocs.org/projects/django-dynamic-serializer/badge/?version=latest)](https://django-dynamic-serializer.readthedocs.io/en/latest/)
 
-By serializing only the fields you actually need, you reduce payload size **and** improve database performance — unrequested relations are never serialized, making it easy to pair with `only()` / `defer()` / `Prefetch` on your queryset so the database only fetches what the view requires.
+Dynamically select which fields a Django REST Framework serializer returns per view, without duplicating serializer classes or over-fetching from the database.
+
+**Full documentation:** [https://django-dynamic-serializer.readthedocs.io/en/latest/](https://django-dynamic-serializer.readthedocs.io/en/latest/)
+
+---
+
+## The problem without this library
+
+**Repeated serializers with similar fields.** It is common to need different field sets for the same model: a list endpoint might return only `id`, `title`, and a minimal nested `author` (`id`, `name`), while a detail endpoint returns full `author` and `reviews`. Without dynamic field selection you end up maintaining multiple serializers that differ only in `Meta.fields` or nested declarations — and keeping them in sync when the model or API contract changes.
+
+```python
+# Same model, three serializers to maintain
+class BookListSerializer(serializers.ModelSerializer):
+    author = AuthorMinimalSerializer()
+    class Meta:
+        model = Book
+        fields = ["id", "title", "author"]
+
+class BookDetailSerializer(serializers.ModelSerializer):
+    author = AuthorSerializer()
+    reviews = ReviewSerializer(many=True)
+    class Meta:
+        model = Book
+        fields = ["id", "title", "isbn", "author", "reviews"]
+
+class BookMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ["id", "title"]
+```
+
+**Database performance with "fat" serializers.** When a single serializer declares many relations (e.g. `author`, `reviews`, `category`), every view that uses it may trigger prefetches for all of them, even when the view only needs a subset. If you strip fields only in the response (e.g. with a custom `to_representation`), Django has already executed the joins and prefetches for data you never use.
+
+```python
+# List view only needs id/title, but the serializer pulls in everything
+class BookListView(ListAPIView):
+    serializer_class = BookSerializer  # has author, reviews, isbn, ...
+    queryset = Book.objects.select_related("author").prefetch_related("reviews")
+    # ^ Two extra queries and JOINs even though list response omits them
+
+# Or you hide fields in to_representation — but DB work is already done
+def to_representation(self, instance):
+    data = super().to_representation(instance)
+    if self.context.get("view").action == "list":
+        return {k: data[k] for k in ("id", "title")}
+    return data
+# Django still ran select_related/prefetch_related; you just threw the data away
+```
+
+---
+
+## What this library does
+
+You define **one** serializer with all possible fields and nested relations. Each view declares exactly which fields it needs via `get_serializer_fields()`. The library prunes the serializer's field set before serialization, so:
+
+- **Smaller payloads** — only the declared fields appear in the response.
+- **Fewer queries** — relations that are not in the field set are never accessed, so you can align your queryset (`select_related`, `prefetch_related`, `only()`) with what the view actually serializes.
+- **No serializer duplication** — one serializer class, many field shapes.
+
+Optional integration with **django-virtual-models** lets the queryset be optimized automatically from the same field declaration (see [documentation](https://django-dynamic-serializer.readthedocs.io/en/latest/virtual_models.html)).
+
+---
+
+## Quick example
+
+```python
+from rest_framework.generics import ListAPIView
+from django_dynamic_serializer import DynamicSerializerView
+
+class BookListView(DynamicSerializerView, ListAPIView):
+    serializer_class = BookSerializer
+    queryset = Book.objects.select_related("author")
+
+    def get_serializer_fields(self):
+        return [
+            "id",
+            "title",
+            {"object_name": "author", "fields": ["id", "name"]},
+        ]
+```
+
+Only `id`, `title`, and nested `author` with `id` and `name` appear in the response; `isbn` and `reviews` are omitted. Because they are not in the field set, you can avoid prefetching `reviews` for this view entirely.
+
+---
 
 ## Installation
 
@@ -10,35 +94,54 @@ By serializing only the fields you actually need, you reduce payload size **and*
 pip install django-dynamic-serializer
 ```
 
-## Quick start
+Requirements: Python ≥ 3.9, Django ≥ 3.2, Django REST Framework ≥ 3.0.
 
-### 1. Add the mixin to your serializer
+Optional (for automatic query optimization with virtual models):
 
-### 2. Add the view mixin and declare the fields you need
+```bash
+pip install django-dynamic-serializer[virtual-models]
+```
 
-Only the fields listed above will appear in the response. Every other field on each serializer is automatically excluded.
-
-### 3. Using the serializer directly (without the view mixin)
-
-You can also pass `fields` when instantiating the serializer manually:
-
+---
 
 ## Field specification format
 
 | Entry type | Meaning |
-|---|---|
+|------------|---------|
 | `"field_name"` | Include a top-level field |
 | `{"object_name": "nested", "fields": [...]}` | Include a nested serializer and recursively select its fields |
 
 Nesting can go as deep as your serializer hierarchy requires.
 
-## How it improves database performance
+---
 
-When you only declare the fields you need:
+## Documentation
 
-1. **Smaller payloads** — less data serialized and sent over the wire.
-2. **Fewer DB queries** — nested serializers that aren't requested are never accessed, so their related-object lookups are skipped entirely.
-3. **Easy to combine with queryset optimizations** — since you know exactly which relations will be serialized, you can precisely tailor `select_related()`, `prefetch_related()`, `only()`, and `defer()` to match.
+Installation, API reference, usage examples, and django-virtual-models integration:
+
+**[https://django-dynamic-serializer.readthedocs.io/en/latest/](https://django-dynamic-serializer.readthedocs.io/en/latest/)**
+
+---
+
+## Contributing
+
+Contributions are welcome. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for how to run tests, set up a development environment, and submit changes.
+
+---
+
+## Running tests
+
+```bash
+python runtests.py
+```
+
+Or with Django's test runner:
+
+```bash
+DJANGO_SETTINGS_MODULE=tests.settings python -m django test tests
+```
+
+---
 
 ## License
 

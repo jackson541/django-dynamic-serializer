@@ -1,4 +1,4 @@
-django-dynamic-serializer
+Django Dynamic Serializer
 =========================
 
 Dynamically select which fields a Django REST Framework serializer returns per
