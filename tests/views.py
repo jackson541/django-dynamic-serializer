@@ -28,7 +28,7 @@ class BookListView(DynamicSerializerView, ListAPIView):
     """List books with id, title, and nested author (id, name) only."""
 
     serializer_class = BookSerializer
-    queryset = Book.objects.select_related("author").prefetch_related("reviews")
+    queryset = Book.objects.select_related("author")
 
     def get_serializer_fields(self):
         return [

@@ -45,17 +45,16 @@ class DynamicSerializerFieldsMixin:
         if isinstance(current_field, ListSerializer):
             current_field = current_field.child
 
-        requested_names = []
+        requested_names = set()
 
         for field in requested_fields:
             if isinstance(field, str):
-                requested_names.append(field)
+                requested_names.add(field)
                 continue
 
             field_name = field['object_name']
-            requested_names.append(field_name)
+            requested_names.add(field_name)
             self._apply_field_selection(current_field.fields[field_name], field['fields'])
 
-        requested_set = set(requested_names)
-        for field_name in set(current_field.fields) - requested_set:
+        for field_name in current_field.fields.keys() - requested_names:
             current_field.fields.pop(field_name)
