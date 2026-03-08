@@ -1,4 +1,4 @@
-# django-dynamic-serializer
+# Django Dynamic Serializer
 
 [![Tests](https://github.com/jackson541/django-dynamic-serializer/actions/workflows/tests.yml/badge.svg)](https://github.com/jackson541/django-dynamic-serializer/actions)
 [![Documentation](https://readthedocs.org/projects/django-dynamic-serializer/badge/?version=latest)](https://django-dynamic-serializer.readthedocs.io/en/latest/)
