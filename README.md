@@ -1,6 +1,6 @@
 # Django Dynamic Serializer
 
-[![Tests](https://github.com/jackson541/django-dynamic-serializer/actions/workflows/tests.yml/badge.svg)](https://github.com/jackson541/django-dynamic-serializer/actions)
+[![Tests](https://github.com/jackson541/django-dynamic-serializer/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/jackson541/django-dynamic-serializer/actions/workflows/tests.yml)
 [![Documentation](https://readthedocs.org/projects/django-dynamic-serializer/badge/?version=latest)](https://django-dynamic-serializer.readthedocs.io/en/latest/)
 
 Dynamically select which fields a Django REST Framework serializer returns per view, without duplicating serializer classes or over-fetching from the database.
