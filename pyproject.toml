@@ -43,7 +43,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["django-virtual-models>=0.1.4"]
+virtual-models = ["django-virtual-models>=0.1.4"]
 
 [project.urls]
 Homepage = "https://github.com/jackson541/django-dynamic-serializer"

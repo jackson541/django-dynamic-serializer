@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Integration with django-virtual-models &mdash; Django Dynamic Serializer 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage Examples" href="examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Django Dynamic Serializer
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Usage Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Integration with django-virtual-models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#why-it-matters">Why it matters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-the-integration-works">How the integration works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#step-1-install-the-dependency">Step 1: Install the dependency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-2-define-virtual-models">Step 2: Define virtual models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-3-create-serializers-with-virtualmodelserializer">Step 3: Create serializers with VirtualModelSerializer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-4-create-views">Step 4: Create views</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-comparison">Performance comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#retrieve-views">Retrieve views</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Django Dynamic Serializer</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Integration with django-virtual-models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/virtual_models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="integration-with-django-virtual-models">
+<h1>Integration with django-virtual-models<a class="headerlink" href="#integration-with-django-virtual-models" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://github.com/vintasoftware/django-virtual-models">django-virtual-models</a>
+is a library that automatically optimizes querysets based on which serializer
+fields are present. When combined with <code class="docutils literal notranslate"><span class="pre">django-dynamic-serializer</span></code>, the
+prefetch strategy is driven entirely by your <code class="docutils literal notranslate"><span class="pre">get_serializer_fields()</span></code>
+declaration — relations that are stripped from the serializer are never
+prefetched.</p>
+<section id="why-it-matters">
+<h2>Why it matters<a class="headerlink" href="#why-it-matters" title="Link to this heading"></a></h2>
+<p>Without virtual models you must manually keep querysets and serializer fields in
+sync. If a view only needs <code class="docutils literal notranslate"><span class="pre">[&quot;id&quot;,</span> <span class="pre">&quot;title&quot;]</span></code> but the queryset still calls
+<code class="docutils literal notranslate"><span class="pre">prefetch_related(&quot;reviews&quot;)</span></code>, the database does extra work for data that is
+never serialized.</p>
+<p>With virtual models the queryset optimization is <strong>automatic</strong>: the library
+inspects the serializer fields and generates only the necessary
+<code class="docutils literal notranslate"><span class="pre">select_related</span></code> / <code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code> calls.</p>
+</section>
+<section id="how-the-integration-works">
+<h2>How the integration works<a class="headerlink" href="#how-the-integration-works" title="Link to this heading"></a></h2>
+<p>The integration relies on two hooks:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DynamicSerializerView._get_empty_serializer()</span></code> creates a serializer
+instance with <code class="docutils literal notranslate"><span class="pre">instance=None</span></code> and the <code class="docutils literal notranslate"><span class="pre">fields</span></code> kwarg applied. This
+produces a serializer whose <code class="docutils literal notranslate"><span class="pre">.fields</span></code> dict contains <strong>only</strong> the fields
+declared in <code class="docutils literal notranslate"><span class="pre">get_serializer_fields()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">VirtualModelListAPIView.get_queryset()</span></code> (from django-virtual-models) calls
+<code class="docutils literal notranslate"><span class="pre">_get_empty_serializer()</span></code> and passes the result to its <code class="docutils literal notranslate"><span class="pre">LookupFinder</span></code>.
+The finder inspects the filtered fields and generates prefetch calls only for
+the relations that are still present.</p></li>
+</ol>
+<p>The flow looks like this:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>GET request
+  -&gt; DynamicSerializerView._get_empty_serializer()
+    -&gt; creates serializer with field selection applied
+  -&gt; VirtualModelListAPIView.get_queryset()
+    -&gt; LookupFinder inspects filtered serializer.fields
+    -&gt; generates only the needed prefetch_related() calls
+  -&gt; queryset is evaluated with minimal queries
+</pre></div>
+</div>
+</section>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading"></a></h2>
+<section id="step-1-install-the-dependency">
+<h3>Step 1: Install the dependency<a class="headerlink" href="#step-1-install-the-dependency" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>django-virtual-models&gt;<span class="o">=</span><span class="m">0</span>.1.4
+</pre></div>
+</div>
+</section>
+<section id="step-2-define-virtual-models">
+<h3>Step 2: Define virtual models<a class="headerlink" href="#step-2-define-virtual-models" title="Link to this heading"></a></h3>
+<p>Create a virtual model for each related model. The virtual model tells
+django-virtual-models how to prefetch the relation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">django_virtual_models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">v</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Author</span><span class="p">,</span> <span class="n">Book</span><span class="p">,</span> <span class="n">Review</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VirtualAuthor</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">VirtualModel</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VirtualReview</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">VirtualModel</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Review</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VirtualBook</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">VirtualModel</span><span class="p">):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">VirtualAuthor</span><span class="p">()</span>
+    <span class="n">review_list</span> <span class="o">=</span> <span class="n">VirtualReview</span><span class="p">(</span><span class="n">lookup</span><span class="o">=</span><span class="s2">&quot;reviews&quot;</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">VirtualBook.author</span></code> tells the library to prefetch the <code class="docutils literal notranslate"><span class="pre">author</span></code> FK.
+<code class="docutils literal notranslate"><span class="pre">review_list</span></code> uses <code class="docutils literal notranslate"><span class="pre">lookup=&quot;reviews&quot;</span></code> to prefetch the reverse FK into a
+<code class="docutils literal notranslate"><span class="pre">to_attr=&quot;review_list&quot;</span></code> attribute, avoiding a conflict with Book’s default
+<code class="docutils literal notranslate"><span class="pre">reviews</span></code> related manager.</p>
+</section>
+<section id="step-3-create-serializers-with-virtualmodelserializer">
+<h3>Step 3: Create serializers with VirtualModelSerializer<a class="headerlink" href="#step-3-create-serializers-with-virtualmodelserializer" title="Link to this heading"></a></h3>
+<p>Replace <code class="docutils literal notranslate"><span class="pre">ModelSerializer</span></code> with <code class="docutils literal notranslate"><span class="pre">VirtualModelSerializer</span></code> and point
+<code class="docutils literal notranslate"><span class="pre">Meta.virtual_model</span></code> to the corresponding virtual model:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django_virtual_models.serializers</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualModelSerializer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_dynamic_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicSerializerFieldsMixin</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AuthorVirtualSerializer</span><span class="p">(</span><span class="n">DynamicSerializerFieldsMixin</span><span class="p">,</span> <span class="n">VirtualModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;birth_year&quot;</span><span class="p">]</span>
+        <span class="n">virtual_model</span> <span class="o">=</span> <span class="n">VirtualAuthor</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReviewVirtualSerializer</span><span class="p">(</span><span class="n">DynamicSerializerFieldsMixin</span><span class="p">,</span> <span class="n">VirtualModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Review</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;rating&quot;</span><span class="p">,</span> <span class="s2">&quot;comment&quot;</span><span class="p">]</span>
+        <span class="n">virtual_model</span> <span class="o">=</span> <span class="n">VirtualReview</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookVirtualSerializer</span><span class="p">(</span><span class="n">DynamicSerializerFieldsMixin</span><span class="p">,</span> <span class="n">VirtualModelSerializer</span><span class="p">):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">AuthorVirtualSerializer</span><span class="p">()</span>
+    <span class="n">reviews</span> <span class="o">=</span> <span class="n">ReviewVirtualSerializer</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="s2">&quot;review_list&quot;</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;isbn&quot;</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;reviews&quot;</span><span class="p">]</span>
+        <span class="n">virtual_model</span> <span class="o">=</span> <span class="n">VirtualBook</span>
+</pre></div>
+</div>
+<p>Note <code class="docutils literal notranslate"><span class="pre">source=&quot;review_list&quot;</span></code> on the <code class="docutils literal notranslate"><span class="pre">reviews</span></code> field — this reads from the
+<code class="docutils literal notranslate"><span class="pre">to_attr</span></code> set by the virtual model prefetch.</p>
+</section>
+<section id="step-4-create-views">
+<h3>Step 4: Create views<a class="headerlink" href="#step-4-create-views" title="Link to this heading"></a></h3>
+<p>Combine <code class="docutils literal notranslate"><span class="pre">DynamicSerializerView</span></code> with <code class="docutils literal notranslate"><span class="pre">VirtualModelListAPIView</span></code> (or
+<code class="docutils literal notranslate"><span class="pre">VirtualModelRetrieveAPIView</span></code>). You do <strong>not</strong> need to write a custom
+<code class="docutils literal notranslate"><span class="pre">get_queryset()</span></code> — the virtual model layer handles it automatically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django_virtual_models.generic_views</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualModelListAPIView</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_dynamic_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicSerializerView</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookVirtualModelListView</span><span class="p">(</span><span class="n">DynamicSerializerView</span><span class="p">,</span> <span class="n">VirtualModelListAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">BookVirtualSerializer</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_serializer_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;reviews&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;rating&quot;</span><span class="p">]},</span>
+        <span class="p">]</span>
+</pre></div>
+</div>
+<p>The queryset starts as a plain <code class="docutils literal notranslate"><span class="pre">Book.objects.all()</span></code>. The virtual model layer
+inspects the field-filtered serializer and adds the necessary prefetches before
+evaluation.</p>
+</section>
+</section>
+<section id="performance-comparison">
+<h2>Performance comparison<a class="headerlink" href="#performance-comparison" title="Link to this heading"></a></h2>
+<p>The following table shows query counts for different field selections, all using
+the same <code class="docutils literal notranslate"><span class="pre">BookVirtualSerializer</span></code> and <code class="docutils literal notranslate"><span class="pre">VirtualModelListAPIView</span></code>:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 15.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Fields requested</p></th>
+<th class="head"><p>Queries</p></th>
+<th class="head"><p>What happens</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code>, <code class="docutils literal notranslate"><span class="pre">author</span></code>, <code class="docutils literal notranslate"><span class="pre">reviews</span></code></p></td>
+<td><p>3</p></td>
+<td><p>1 query for books + 1 for authors (prefetch) + 1 for reviews (prefetch)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code>, <code class="docutils literal notranslate"><span class="pre">author</span></code></p></td>
+<td><p>2</p></td>
+<td><p>1 query for books + 1 for authors (prefetch); reviews skipped</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code></p></td>
+<td><p>1</p></td>
+<td><p>1 query for books only (no prefetches)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The key insight: <strong>query count scales with the number of requested relations, not
+with the number of rows</strong>. Adding more books does not increase the query count
+because <code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code> batches all related objects in a single query per
+relation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">django-virtual-models</span></code> uses <code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code> for <strong>all</strong> relations,
+including forward ForeignKey fields like <code class="docutils literal notranslate"><span class="pre">Book.author</span></code>. In plain Django you
+would use <code class="docutils literal notranslate"><span class="pre">select_related(&quot;author&quot;)</span></code> to fetch the author via a JOIN in the
+same query as books (1 query instead of 2). The trade-off is that virtual
+models give you <strong>automatic</strong> optimization driven by serializer fields,
+whereas <code class="docutils literal notranslate"><span class="pre">select_related</span></code> / <code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code> must be maintained manually.</p>
+<p>For comparison, without virtual models:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Fields requested</p></th>
+<th class="head"><p>Manual optimization</p></th>
+<th class="head"><p>Virtual models</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code>, <code class="docutils literal notranslate"><span class="pre">author</span></code>, <code class="docutils literal notranslate"><span class="pre">reviews</span></code></p></td>
+<td><p>2 queries (JOIN + prefetch)</p></td>
+<td><p>3 queries (prefetch + prefetch)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code>, <code class="docutils literal notranslate"><span class="pre">author</span></code></p></td>
+<td><p>1 query (JOIN)</p></td>
+<td><p>2 queries (prefetch)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code></p></td>
+<td><p>1 query</p></td>
+<td><p>1 query</p></td>
+</tr>
+</tbody>
+</table>
+<p>Manual optimization uses <code class="docutils literal notranslate"><span class="pre">select_related(&quot;author&quot;)</span></code> for the FK (JOIN) and
+<code class="docutils literal notranslate"><span class="pre">prefetch_related(&quot;reviews&quot;)</span></code> for the reverse FK. Virtual models use
+<code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code> for both, resulting in one extra query when the author
+relation is included. The benefit is that you do not need to write or update
+querysets when the field selection changes.</p>
+</div>
+<p>Without virtual models you would need to manually write a different queryset for
+each view to achieve the same result. With this integration the optimization is
+automatic — just change <code class="docutils literal notranslate"><span class="pre">get_serializer_fields()</span></code> and the queryset adapts.</p>
+</section>
+<section id="retrieve-views">
+<h2>Retrieve views<a class="headerlink" href="#retrieve-views" title="Link to this heading"></a></h2>
+<p>The same pattern works for single-object endpoints using
+<code class="docutils literal notranslate"><span class="pre">VirtualModelRetrieveAPIView</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django_virtual_models.generic_views</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualModelRetrieveAPIView</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookVirtualModelDetailView</span><span class="p">(</span><span class="n">DynamicSerializerView</span><span class="p">,</span> <span class="n">VirtualModelRetrieveAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">BookVirtualSerializer</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_serializer_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;isbn&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;birth_year&quot;</span><span class="p">]},</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;reviews&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;rating&quot;</span><span class="p">,</span> <span class="s2">&quot;comment&quot;</span><span class="p">]},</span>
+        <span class="p">]</span>
+</pre></div>
+</div>
+<p>This executes 3 queries (1 for the book + 1 for authors prefetch + 1 for
+reviews prefetch) regardless of how many reviews exist.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.html" class="btn btn-neutral float-left" title="Usage Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Jackson Alves.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

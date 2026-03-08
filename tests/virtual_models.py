@@ -11,7 +11,7 @@ try:
     from .models import Author, Book, Review
 
     class VirtualAuthor(v.VirtualModel):
-        """Virtual model for Author; prefetched via FK from Book."""
+        """Virtual model for Author; resolved via prefetch_related (not select_related) by django-virtual-models."""
 
         class Meta:
             model = Author
@@ -26,10 +26,10 @@ try:
         """
         Virtual model for Book with nested VirtualAuthor and VirtualReview.
 
-        ``author`` uses prefetch_related for the FK relation.
-        ``review_list`` uses ``lookup='reviews'`` to prefetch the reverse FK
-        into ``to_attr='review_list'``, avoiding a conflict with Book's
-        ``reviews`` RelatedManager.
+        django-virtual-models uses ``prefetch_related`` for all relations,
+        including the forward FK ``author``. For the reverse FK, ``review_list``
+        uses ``lookup='reviews'`` to prefetch into ``to_attr='review_list'``,
+        avoiding a conflict with Book's ``reviews`` RelatedManager.
         """
         author = VirtualAuthor()
         review_list = VirtualReview(lookup="reviews")

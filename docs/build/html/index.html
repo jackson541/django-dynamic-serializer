@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>django-dynamic-serializer &mdash; Django Dynamic Serializer 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Django Dynamic Serializer
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Usage Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="virtual_models.html">Integration with django-virtual-models</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Django Dynamic Serializer</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">django-dynamic-serializer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="django-dynamic-serializer">
+<h1>django-dynamic-serializer<a class="headerlink" href="#django-dynamic-serializer" title="Link to this heading"></a></h1>
+<p>Dynamically select which fields a Django REST Framework serializer returns per
+view, without duplicating serializer classes or over-fetching from the database.</p>
+<section id="the-problem-without-this-library">
+<h2>The problem without this library<a class="headerlink" href="#the-problem-without-this-library" title="Link to this heading"></a></h2>
+<p><strong>Repeated serializers with similar fields.</strong> It is common to need different
+field sets for the same model: a list endpoint might return only <code class="docutils literal notranslate"><span class="pre">id</span></code>,
+<code class="docutils literal notranslate"><span class="pre">title</span></code>, and a minimal nested <code class="docutils literal notranslate"><span class="pre">author</span></code> (<code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code>), while a detail
+endpoint returns full <code class="docutils literal notranslate"><span class="pre">author</span></code> and <code class="docutils literal notranslate"><span class="pre">reviews</span></code>. Without dynamic field
+selection you end up maintaining multiple serializers that differ only in
+<code class="docutils literal notranslate"><span class="pre">Meta.fields</span></code> or nested declarations — e.g. <code class="docutils literal notranslate"><span class="pre">BookListSerializer</span></code>,
+<code class="docutils literal notranslate"><span class="pre">BookDetailSerializer</span></code>, <code class="docutils literal notranslate"><span class="pre">BookMinimalSerializer</span></code> — and keeping them in sync
+when the model or API contract changes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Same model, three serializers to maintain</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BookListSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">AuthorMinimalSerializer</span><span class="p">()</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">]</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookDetailSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">AuthorSerializer</span><span class="p">()</span>
+    <span class="n">reviews</span> <span class="o">=</span> <span class="n">ReviewSerializer</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;isbn&quot;</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;reviews&quot;</span><span class="p">]</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookMinimalSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><strong>Database performance with “fat” serializers.</strong> When a single serializer
+declares many relations (e.g. <code class="docutils literal notranslate"><span class="pre">author</span></code>, <code class="docutils literal notranslate"><span class="pre">reviews</span></code>, <code class="docutils literal notranslate"><span class="pre">category</span></code>), every view
+that uses it may trigger prefetches for all of them, even when the view only
+needs a subset. That leads to unnecessary queries and larger result sets. If you
+strip fields only in the response (e.g. with a custom <code class="docutils literal notranslate"><span class="pre">to_representation</span></code>),
+Django has already executed the joins and prefetches for data you never use.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># List view only needs id/title, but the serializer pulls in everything</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BookListView</span><span class="p">(</span><span class="n">ListAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">BookSerializer</span>  <span class="c1"># has author, reviews, isbn, ...</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;author&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">&quot;reviews&quot;</span><span class="p">)</span>
+    <span class="c1"># ^ Two extra queries and JOINs even though list response omits them</span>
+
+<span class="c1"># Or you hide fields in to_representation — but DB work is already done</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_representation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_representation</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;view&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">data</span>
+<span class="c1"># Django still ran select_related/prefetch_related; you just threw the data away</span>
+</pre></div>
+</div>
+</section>
+<section id="what-this-library-does">
+<h2>What this library does<a class="headerlink" href="#what-this-library-does" title="Link to this heading"></a></h2>
+<p>You define <strong>one</strong> serializer with all possible fields and nested relations. Each
+view declares exactly which fields it needs via <code class="docutils literal notranslate"><span class="pre">get_serializer_fields()</span></code>. The
+library prunes the serializer’s field set before serialization, so:</p>
+<ul class="simple">
+<li><p><strong>Smaller payloads</strong> — only the declared fields appear in the response.</p></li>
+<li><p><strong>Fewer queries</strong> — relations that are not in the field set are never
+accessed, so you can align your queryset (e.g. <code class="docutils literal notranslate"><span class="pre">select_related</span></code>,
+<code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code>, <code class="docutils literal notranslate"><span class="pre">only()</span></code>) with what the view actually serializes.</p></li>
+<li><p><strong>No serializer duplication</strong> — one serializer class, many field shapes.</p></li>
+</ul>
+<p>Combined with optional <strong>django-virtual-models</strong>, the queryset can be optimized
+automatically from the same field declaration (see <a class="reference internal" href="virtual_models.html"><span class="doc">Integration with django-virtual-models</span></a>).</p>
+</section>
+<section id="quick-example">
+<h2>Quick example<a class="headerlink" href="#quick-example" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BookListView</span><span class="p">(</span><span class="n">DynamicSerializerView</span><span class="p">,</span> <span class="n">ListAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">BookSerializer</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;author&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_serializer_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">]},</span>
+        <span class="p">]</span>
+</pre></div>
+</div>
+<p>Only <code class="docutils literal notranslate"><span class="pre">id</span></code>, <code class="docutils literal notranslate"><span class="pre">title</span></code>, and nested <code class="docutils literal notranslate"><span class="pre">author</span></code> with <code class="docutils literal notranslate"><span class="pre">id</span></code> and <code class="docutils literal notranslate"><span class="pre">name</span></code> appear
+in the response; <code class="docutils literal notranslate"><span class="pre">isbn</span></code> and <code class="docutils literal notranslate"><span class="pre">reviews</span></code> are omitted. Because they are not in
+the field set, you can avoid prefetching <code class="docutils literal notranslate"><span class="pre">reviews</span></code> for this view entirely.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#optional-django-virtual-models">Optional: django-virtual-models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#dynamicserializerfieldsmixin"><code class="docutils literal notranslate"><span class="pre">DynamicSerializerFieldsMixin</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#dynamicserializerview"><code class="docutils literal notranslate"><span class="pre">DynamicSerializerView</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Usage Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#defining-serializers">Defining serializers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#using-the-serializer-directly">Using the serializer directly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#using-with-views">Using with views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#deep-nesting">Deep nesting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#partial-field-selection-on-the-same-queryset">Partial field selection on the same queryset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html#avoiding-n-1-with-flat-fields">Avoiding N+1 with flat fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="virtual_models.html">Integration with django-virtual-models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="virtual_models.html#why-it-matters">Why it matters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtual_models.html#how-the-integration-works">How the integration works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtual_models.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtual_models.html#performance-comparison">Performance comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="virtual_models.html#retrieve-views">Retrieve views</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Jackson Alves.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

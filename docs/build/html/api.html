@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; Django Dynamic Serializer 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Usage Examples" href="examples.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Django Dynamic Serializer
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dynamicserializerfieldsmixin"><code class="docutils literal notranslate"><span class="pre">DynamicSerializerFieldsMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#field-specification-format">Field specification format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-it-works">How it works</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dynamicserializerview"><code class="docutils literal notranslate"><span class="pre">DynamicSerializerView</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#get-serializer-fields"><code class="docutils literal notranslate"><span class="pre">get_serializer_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#get-serializer"><code class="docutils literal notranslate"><span class="pre">get_serializer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#get-empty-serializer"><code class="docutils literal notranslate"><span class="pre">_get_empty_serializer()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Usage Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="virtual_models.html">Integration with django-virtual-models</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Django Dynamic Serializer</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>The library exposes two public classes, both importable from the top-level
+package:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django_dynamic_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DynamicSerializerFieldsMixin</span><span class="p">,</span>
+    <span class="n">DynamicSerializerView</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<section id="dynamicserializerfieldsmixin">
+<h2><code class="docutils literal notranslate"><span class="pre">DynamicSerializerFieldsMixin</span></code><a class="headerlink" href="#dynamicserializerfieldsmixin" title="Link to this heading"></a></h2>
+<p><strong>Module:</strong> <code class="docutils literal notranslate"><span class="pre">django_dynamic_serializer.mixins</span></code></p>
+<p>A serializer mixin that accepts an optional <code class="docutils literal notranslate"><span class="pre">fields</span></code> keyword argument to
+dynamically select which fields are included in the serialized output. Add it to
+any <code class="docutils literal notranslate"><span class="pre">ModelSerializer</span></code> (or any <code class="docutils literal notranslate"><span class="pre">Serializer</span></code> subclass) as the <strong>first</strong> parent
+class so its <code class="docutils literal notranslate"><span class="pre">__init__</span></code> runs before the DRF base class.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">serializers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_dynamic_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicSerializerFieldsMixin</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AuthorSerializer</span><span class="p">(</span><span class="n">DynamicSerializerFieldsMixin</span><span class="p">,</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Author</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;birth_year&quot;</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookSerializer</span><span class="p">(</span><span class="n">DynamicSerializerFieldsMixin</span><span class="p">,</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="n">AuthorSerializer</span><span class="p">()</span>
+    <span class="n">reviews</span> <span class="o">=</span> <span class="n">ReviewSerializer</span><span class="p">(</span><span class="n">many</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Book</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;isbn&quot;</span><span class="p">,</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;reviews&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="field-specification-format">
+<h3>Field specification format<a class="headerlink" href="#field-specification-format" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">fields</span></code> argument is a list where each entry is either:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Entry type</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;field_name&quot;</span></code></p></td>
+<td><p>Include a top-level field as-is.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">{&quot;object_name&quot;:</span> <span class="pre">&quot;nested&quot;,</span> <span class="pre">&quot;fields&quot;:</span> <span class="pre">[...]}</span></code></p></td>
+<td><p>Include a nested serializer and recursively select its sub-fields.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Nesting can go as deep as your serializer hierarchy requires:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">,</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;books&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]},</span>
+        <span class="p">],</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="how-it-works">
+<h3>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">__init__</span></code> pops the <code class="docutils literal notranslate"><span class="pre">fields</span></code> kwarg before calling <code class="docutils literal notranslate"><span class="pre">super().__init__()</span></code>
+so that DRF’s <code class="docutils literal notranslate"><span class="pre">Serializer.__init__</span></code> does not receive an unexpected argument.</p></li>
+<li><p>After the parent <code class="docutils literal notranslate"><span class="pre">__init__</span></code> has built the full <code class="docutils literal notranslate"><span class="pre">self.fields</span></code> ordered dict,
+<code class="docutils literal notranslate"><span class="pre">_apply_field_selection</span></code> is called to prune it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_apply_field_selection</span></code> walks the requested field list. For each nested
+dict entry it recurses into the child serializer’s <code class="docutils literal notranslate"><span class="pre">.fields</span></code>. After
+processing all entries, any field <strong>not</strong> in the requested set is removed from
+the serializer.</p></li>
+<li><p>When a field wraps a <code class="docutils literal notranslate"><span class="pre">many=True</span></code> serializer, DRF represents it as a
+<code class="docutils literal notranslate"><span class="pre">ListSerializer</span></code>. The method transparently unwraps to
+<code class="docutils literal notranslate"><span class="pre">ListSerializer.child</span></code> before applying the selection.</p></li>
+</ol>
+</section>
+</section>
+<section id="dynamicserializerview">
+<h2><code class="docutils literal notranslate"><span class="pre">DynamicSerializerView</span></code><a class="headerlink" href="#dynamicserializerview" title="Link to this heading"></a></h2>
+<p><strong>Module:</strong> <code class="docutils literal notranslate"><span class="pre">django_dynamic_serializer.views</span></code></p>
+<p>A view mixin that connects the field specification to the serializer. Combine it
+with any DRF generic view (<code class="docutils literal notranslate"><span class="pre">ListAPIView</span></code>, <code class="docutils literal notranslate"><span class="pre">RetrieveAPIView</span></code>, etc.) as the
+<strong>first</strong> parent class.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework.generics</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListAPIView</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_dynamic_serializer</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicSerializerView</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BookListView</span><span class="p">(</span><span class="n">DynamicSerializerView</span><span class="p">,</span> <span class="n">ListAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">BookSerializer</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;author&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_serializer_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;object_name&quot;</span><span class="p">:</span> <span class="s2">&quot;author&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">]},</span>
+        <span class="p">]</span>
+</pre></div>
+</div>
+<section id="get-serializer-fields">
+<h3><code class="docutils literal notranslate"><span class="pre">get_serializer_fields()</span></code><a class="headerlink" href="#get-serializer-fields" title="Link to this heading"></a></h3>
+<p>Subclasses <strong>must</strong> implement this method. It returns the field specification list
+(same format accepted by <code class="docutils literal notranslate"><span class="pre">DynamicSerializerFieldsMixin</span></code>). If not implemented,
+a <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> is raised at request time.</p>
+</section>
+<section id="get-serializer">
+<h3><code class="docutils literal notranslate"><span class="pre">get_serializer()</span></code><a class="headerlink" href="#get-serializer" title="Link to this heading"></a></h3>
+<p>Overrides DRF’s <code class="docutils literal notranslate"><span class="pre">get_serializer()</span></code> to inject the <code class="docutils literal notranslate"><span class="pre">fields</span></code> kwarg on <strong>GET</strong>
+requests. For non-GET methods (POST, PUT, PATCH, DELETE) the serializer is
+created normally with all fields, so write operations are unaffected.</p>
+</section>
+<section id="get-empty-serializer">
+<h3><code class="docutils literal notranslate"><span class="pre">_get_empty_serializer()</span></code><a class="headerlink" href="#get-empty-serializer" title="Link to this heading"></a></h3>
+<p>Creates a field-filtered serializer instance with <code class="docutils literal notranslate"><span class="pre">instance=None</span></code>. This hook
+exists specifically for the <strong>django-virtual-models</strong> integration: the
+<code class="docutils literal notranslate"><span class="pre">VirtualModelListAPIView</span></code> calls <code class="docutils literal notranslate"><span class="pre">_get_empty_serializer()</span></code> to inspect which
+fields are present, then generates only the needed <code class="docutils literal notranslate"><span class="pre">prefetch_related</span></code> calls.
+See <a class="reference internal" href="virtual_models.html"><span class="doc">Integration with django-virtual-models</span></a> for details.</p>
+<p>On non-GET requests this method returns a plain serializer (no field filtering)
+so that introspection used by virtual models does not interfere with write
+operations.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Usage Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Jackson Alves.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
